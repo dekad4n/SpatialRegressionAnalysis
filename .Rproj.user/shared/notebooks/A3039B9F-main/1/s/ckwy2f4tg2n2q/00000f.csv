@@ -1,0 +1,4 @@
+"0","# Aggregate the data"
+"0","yield_aggregated <- sf::aggregate(x = yield[""yield""], by = trial_design_subplots, FUN = mean)"
+"2","Error: 'aggregate' is not an exported object from 'namespace:sf'
+"

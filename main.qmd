@@ -1,0 +1,199 @@
+**Preparation**
+
+Install pacman if it does not exist and load libraries that will be used.
+
+```{r}
+if (!require("pacman")) install.packages("pacman")
+ pacman::p_load(
+ sf, # vector data operations
+ dplyr, # data wrangling
+ ggplot2, # for map creation
+ modelsummary, # regression table generation
+ patchwork # arrange multiple plots
+)
+```
+
+Load theme
+
+```{r}
+theme_for_map <-
+ theme(
+ axis.ticks = element_blank(),
+ axis.text = element_blank(),
+ axis.line = element_blank(),
+ panel.border = element_blank(),
+ panel.grid = element_line(color = "transparent"),
+ panel.background = element_blank(),
+ plot.background = element_rect(fill = "transparent", color = "transparent")
+ )
+```
+
+**Instructions**
+
+```{r}
+st_drivers()["RDS",]
+```
+
+```{r}
+## Fix it
+library(here)
+trial_design <- sf::st_as_sf(readRDS(here("data","trial_design.rds")))
+```
+
+```{r}
+ggplot() +
+  geom_sf(data = trial_design, aes(fill = NRATE)) +
+  scale_fill_gradient(low = "#FBC178", high = "#c81c1c") +
+  labs(fill = "NRATE") +
+  theme_for_map
+```
+
+```{r}
+nh3 <- sf::st_read(here("data","NH3.gpkg"))
+ec_shp <- sf::st_read(here("data", "ec.shp"))
+yield <- sf::st_as_sf(readRDS(here("data","yield.rds")))
+```
+
+```{r}
+# Create maps of each variable
+g_nh3 <- ggplot() +
+  geom_sf(data = nh3, aes(color = aa_NH3 , fill = aa_NH3), size = 0.2) +
+  scale_color_gradient(low = "#FBC178", high = "#c81c1c") +
+  scale_fill_gradient(low = "#FBC178", high = "#c81c1c") +
+  geom_sf(data = trial_design[,"geometry"], fill = "transparent", color = "black") +
+  theme_for_map +
+  theme(legend.key.size = unit(0.2, "cm"), legend.text = element_text(size = 4))
+
+g_ec <- ggplot() +
+  geom_sf(data = ec_shp,  aes(color = ec , fill = ec), size = 0.2) +
+  scale_fill_gradient(low = "#FBC178", high = "#c81c1c") +
+  scale_color_gradient(low = "#FBC178", high = "#c81c1c") +
+  geom_sf(data = trial_design[,"geometry"], fill = "transparent", color = "black") +
+  labs(fill = "ec") +
+  theme_for_map +
+  theme(legend.key.size = unit(0.2, "cm"), legend.text = element_text(size =4))
+
+g_yield <- ggplot() +
+  geom_sf(data = yield,  aes(color = yield , fill = yield), size = 0.2) +
+  scale_fill_gradient(low = "#FBC178", high = "#c81c1c") +
+  scale_color_gradient(low = "#FBC178", high = "#c81c1c") +
+  geom_sf(data = trial_design[,"geometry"], fill = "transparent", color = "black") +
+  labs(fill = "yield") +
+  theme_for_map + 
+  theme(legend.key.size = unit(0.2, "cm"), legend.text = element_text(size = 4))
+
+# Combine the maps into one figure using patchwork
+combined_figure <- g_yield / g_nh3 / g_ec
+
+# Display the combined figure
+combined_figure
+```
+
+```{r}
+create_subplots <- function(sf_object, ncol = 3, nrow = 2) {
+  id <- sf_object$id
+  
+  geometries <- st_geometry(sf_object)
+  
+  subplots <- lapply(1:length(geometries), function(i) {
+    grid <- sf::st_make_grid(geometries[i], n = c(ncol, nrow))
+    grid_sf <- sf::st_as_sf(grid)
+    grid_sf$id <- id[i] # add id column to each subplot sf object
+    return(grid_sf)
+  })
+
+  # Combine all subplots into a single sf object
+  subplots_sf <- do.call(rbind, subplots)
+  
+  return(subplots_sf)
+}
+
+
+```
+
+```{r}
+trial_design_subplots <- create_subplots(trial_design, 3, 2)
+na.omit(trial_design_subplots)
+```
+
+```{r}
+ggplot() +
+  geom_sf(data = trial_design_subplots) +
+  labs(fill = "Plot ID") +
+  theme_for_map
+
+```
+
+```{r}
+# Join the data to the subplots
+subplots_yield <- sf::st_join(trial_design_subplots, yield)
+subplots_nh3 <- sf::st_join(trial_design_subplots, nh3)
+subplots_ec <- sf::st_join(trial_design_subplots, ec_shp)
+
+# Aggregate the joined data
+yield_aggregated <- aggregate(subplots_yield["yield"], by = list(subplots_yield$id), FUN = mean, na.rm = TRUE)
+nh3_aggregated <- aggregate(subplots_nh3["aa_NH3"], by = list(subplots_nh3$id), FUN = mean, na.rm = TRUE)
+ec_shp_aggregated <- aggregate(subplots_ec["ec"], by = list(subplots_ec$id), FUN = mean, na.rm = TRUE)
+
+# Combine the aggregated data
+combined <- data.frame(yield_aggregated, aa_NH3 = nh3_aggregated$aa_NH3, ec = ec_shp_aggregated$ec)
+
+names(combined)[names(combined) == "Group.1"] <- "id"
+
+```
+
+```{r}
+combined
+```
+
+```{r}
+# Join the combined data with the trial_design_subplots data
+trial_design_subplots <- trial_design_subplots %>%
+  left_join(combined, by = 'id')
+
+# Create the map for yield
+g_yield <- ggplot() +
+  geom_sf(data = trial_design_subplots, aes(fill = yield), size = 0.2) +
+  scale_fill_gradient(low = "#FBC178", high = "#c81c1c") +
+  labs(fill = "yield") +
+  theme_for_map +
+  theme(legend.key.size = unit(0.2, "cm"), legend.text = element_text(size = 4))
+
+# Create the map for nitrogen rate (NH3)
+g_nh3 <- ggplot() +
+  geom_sf(data = trial_design_subplots, aes(fill = aa_NH3), size = 0.2) +
+  scale_fill_gradient(low = "#FBC178", high = "#c81c1c") +
+  labs(fill = "aa_NH3") +
+  theme_for_map +
+  theme(legend.key.size = unit(0.2, "cm"), legend.text = element_text(size = 4))
+
+# Create the map for EC
+g_ec <- ggplot() +
+  geom_sf(data = trial_design_subplots, aes(fill = ec), size = 0.2) +
+  scale_fill_gradient(low = "#FBC178", high = "#c81c1c", na.value = "transparent") +
+  labs(fill = "ec") +
+  theme_for_map +
+  theme(legend.key.size = unit(0.2, "cm"), legend.text = element_text(size = 4))
+
+# Combine the maps into one figure using patchwork
+combined_figure <- g_yield / g_nh3 / g_ec
+
+# Display the combined figure
+combined_figure
+
+
+
+
+```
+
+```{r}
+
+reg_data <- na.omit(trial_design_subplots)
+
+# Running the regression model
+ols_res <- lm(yield ~ aa_NH3 + I(aa_NH3^2) + I(aa_NH3 * ec) + I(aa_NH3^2 * ec), data = reg_data)
+
+# Displaying the summary of the model
+modelsummary::modelsummary(ols_res, stars = TRUE, gof_omit = "IC|Log|Adj|R.squared")
+
+```

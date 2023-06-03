@@ -1,0 +1,11 @@
+"0","if (!require(""pacman"")) install.packages(""pacman"")"
+"2","Loading required package: pacman
+"
+"2","Warning: package ‘pacman’ was built under R version 4.2.3"
+"0"," pacman::p_load("
+"0"," sf, # vector data operations"
+"0"," dplyr, # data wrangling"
+"0"," ggplot2, # for map creation"
+"0"," modelsummary, # regression table generation"
+"0"," patchwork # arrange multiple plots"
+"0",")"

@@ -1,0 +1,5 @@
+"0","## Fix it"
+"0","library(here)"
+"2","here() starts at D:/RProjs/Second Homework Assignment/second_homework
+"
+"0","trial_design <- sf::st_as_sf(readRDS(here(""data"",""trial_design.rds"")))"

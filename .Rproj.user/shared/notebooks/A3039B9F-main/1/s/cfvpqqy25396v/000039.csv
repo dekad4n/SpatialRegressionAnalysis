@@ -1,0 +1,8 @@
+"0",""
+"0","reg_data <- na.omit(trial_design_subplots)"
+"0",""
+"0","# Running the regression model"
+"0","ols_res <- lm(yield ~ aa_NH3 + I(aa_NH3^2) + I(aa_NH3 * ec) + I(aa_NH3^2 * ec), data = reg_data)"
+"0",""
+"0","# Displaying the summary of the model"
+"0","modelsummary::modelsummary(ols_res, stars = TRUE, gof_omit = ""IC|Log|Adj|R.squared"")"

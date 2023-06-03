@@ -1,0 +1,5 @@
+"0","ggplot() +"
+"0","  geom_sf(data = trial_design, aes(fill = NRATE)) +"
+"0","  scale_fill_gradient(low = ""#FBC178"", high = ""#c81c1c"") +"
+"0","  labs(fill = ""NRATE"") +"
+"0","  theme_for_map"

@@ -1,0 +1,6 @@
+"0",""
+"0","plot_geometries <- st_geometry(nh3)"
+"0","subplots <- st_subdivide(plot_geometries, n = 6)"
+"2","Error in st_subdivide(plot_geometries, n = 6) : 
+  could not find function ""st_subdivide""
+"

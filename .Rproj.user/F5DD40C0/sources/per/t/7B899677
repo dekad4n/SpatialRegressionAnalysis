@@ -1,0 +1,28 @@
+{
+    "id": "7B899677",
+    "path": null,
+    "project_path": null,
+    "type": "object_explorer",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1684855634606.0,
+    "source_on_save": false,
+    "relative_order": 6,
+    "properties": {
+        "id": "1b8af354ee054e34867682d722fb2832",
+        "name": "g_nh3",
+        "title": "g_nh3",
+        "language": "R",
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1380601816152,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1684855634606,
+    "read_only": false,
+    "read_only_alternatives": []
+}
